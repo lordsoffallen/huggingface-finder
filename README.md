@@ -9,7 +9,7 @@ Take a look at the [Kedro documentation](https://docs.kedro.org) to get started.
 The file in `conf/base/catalog.yml` contains configuration that can be adjusted. 
 
 One can execute `kedro run` to run everything end to end, or via `kedro run --from-nodes=...` to run certain functions.
-The workflow itself is defined in the `src/finder/pipelines/pipeline.py`
+The workflow itself is defined in the `src/hffinder/pipelines/pipeline.py`
 
 
 ## Rules and guidelines

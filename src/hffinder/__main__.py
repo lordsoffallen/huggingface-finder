@@ -1,5 +1,5 @@
 """huggingface-finder file for ensuring the package is executable
-as `huggingface-finder` and `python -m finder`
+as `huggingface-finder` and `python -m hffinder`
 """
 import importlib
 from pathlib import Path

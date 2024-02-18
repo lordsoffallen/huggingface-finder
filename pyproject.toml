@@ -3,15 +3,15 @@ requires = [ "setuptools",]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "finder"
+name = "hffinder"
 readme = "README.md"
 dynamic = [ "dependencies", "version",]
 
 [project.scripts]
-huggingface-finder = "finder.__main__:main"
+huggingface-finder = "hffinder.__main__:main"
 
 [tool.kedro]
-package_name = "finder"
+package_name = "hffinder"
 project_name = "huggingface-finder"
 kedro_init_version = "0.19.2"
 tools = [ "Linting", "Testing", "Custom Logging", "Data Structure",]
@@ -41,7 +41,7 @@ docstring-code-format = true
 file = "environment.yml"
 
 [tool.setuptools.dynamic.version]
-attr = "finder.__version__"
+attr = "hffinder.__version__"
 
 [tool.setuptools.packages.find]
 where = [ "src",]

@@ -36,7 +36,7 @@ loggers:
   kedro:
     level: INFO
 
-  finder:
+  hffinder:
     level: INFO
 
 root:
