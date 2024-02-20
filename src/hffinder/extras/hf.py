@@ -1,6 +1,8 @@
 from typing import Any
 from datasets import Dataset, load_dataset
 from kedro.io import AbstractDataset
+from .fs import mkdir
+from pathlib import Path
 import logging
 
 
@@ -15,7 +17,7 @@ class HFDataset(AbstractDataset):
         credentials: dict[Any] = None,
         raise_error_if_push_hub_fails: bool = True
     ):
-        self._filepath = filepath
+        self._filepath = str(mkdir(Path(filepath)))
         self._dataset_name = dataset_name
         self._credentials = credentials
         self._raise_error_if_push_hub_fails = raise_error_if_push_hub_fails
@@ -32,7 +34,13 @@ class HFDataset(AbstractDataset):
         data.save_to_disk(self._filepath)
 
         logger.info("Saving to HuggingFace Hub")
-        token = self._credentials.get('write')
+
+        if isinstance(self._credentials, dict):
+            token = self._credentials.get('write')
+        elif isinstance(self._credentials, str):
+            token = self._credentials
+        else:
+            token = None
 
         try:
             data.push_to_hub(self._dataset_name, token=token)

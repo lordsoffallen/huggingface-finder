@@ -26,6 +26,15 @@ https://kedro.readthedocs.io/en/stable/kedro_project_setup/settings.html."""
 from kedro.config import OmegaConfigLoader
 from omegaconf.resolvers import oc
 
+# ===== Workaround for making credentials optional  =====
+from unittest.mock import patch, Mock
+
+patcher = patch(
+    "kedro.io.data_catalog._get_credentials",
+    Mock(side_effect=lambda name, credentials: credentials.get(name))
+)
+patcher.start()
+# ========================================================
 
 CONFIG_LOADER_CLASS = OmegaConfigLoader
 

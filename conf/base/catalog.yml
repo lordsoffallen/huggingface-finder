@@ -4,9 +4,9 @@ dataset#api:
 
 dataset#hf:
   type: hffinder.extras.hf.HFDataset
-  filepath: data/01_raw/
+  filepath: data/01_raw/datasets/
   dataset_name: ftopal/huggingface-datasets-raw
-  credentials: &credentials ${oc.select:huggingface}
+  credentials: huggingface
 
 model#api:
   type: hffinder.extras.api.HFModelScrapper
@@ -14,6 +14,6 @@ model#api:
 
 model#hf:
   type: hffinder.extras.hf.HFDataset
-  filepath: data/01_raw/
+  filepath: data/01_raw/models/
   dataset_name: ftopal/huggingface-models-raw
-  credentials: *credentials
+  credentials: huggingface
