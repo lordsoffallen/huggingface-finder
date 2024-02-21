@@ -3,17 +3,29 @@ dataset#api:
   cachepath: data/00_cache/datasets
 
 dataset#hf:
-  type: hffinder.extras.hf.HFDataset
+  type: &HFDataset hffinder.extras.hf.HFDataset
   filepath: data/01_raw/datasets/
   dataset_name: ftopal/huggingface-datasets-raw
-  credentials: huggingface
+  credentials: &credentials huggingface
+
+clean_dataset#hf:
+  type: *HFDataset
+  filepath: data/04_feature/datasets/
+  dataset_name: ftopal/huggingface-datasets
+  credentials: *credentials
 
 model#api:
   type: hffinder.extras.api.HFModelScrapper
   cachepath: data/00_cache/models
 
 model#hf:
-  type: hffinder.extras.hf.HFDataset
+  type: *HFDataset
   filepath: data/01_raw/models/
   dataset_name: ftopal/huggingface-models-raw
-  credentials: huggingface
+  credentials: *credentials
+
+clean_model#hf:
+  type: *HFDataset
+  filepath: data/04_feature/models/
+  dataset_name: ftopal/huggingface-models
+  credentials: *credentials
