@@ -175,7 +175,7 @@ def process_markdown(text: str):
     return text
 
 
-def preprocess(ds: Dataset, n_jobs: int = 10) -> Dataset:
+def preprocess(ds: Dataset, n_jobs: int | str = 10) -> Dataset:
     # Process Tags
     ds = ds.map(lambda x: {"arxiv": extract_arxiv_number(x)}, input_columns="tags")
     ds = ds.map(lambda x: {"languages": extract_languages(x)}, input_columns="tags")
@@ -189,7 +189,7 @@ def preprocess(ds: Dataset, n_jobs: int = 10) -> Dataset:
     ds = ds.map(
         lambda x: {"text_str": process_markdown(x)},
         input_columns="text_str",
-        num_proc=n_jobs,
+        num_proc=n_jobs if isinstance(n_jobs, int) else int(n_jobs),
     )
     ds = ds.map(
         lambda txt, tag: {"processed_text": f"{txt}\n{tag}"},

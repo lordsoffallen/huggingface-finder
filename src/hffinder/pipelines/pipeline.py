@@ -18,13 +18,13 @@ def create_pipeline(**kwargs) -> Pipeline:
         ),
         node(
             preprocess,
-            inputs='dataset#hf',
+            inputs=['dataset#hf', 'params:preprocess.n_jobs'],
             outputs="clean_dataset#hf",
             name='preprocess_datasets'
         ),
         node(
             preprocess,
-            inputs='model#hf',
+            inputs=['model#hf', 'params:preprocess.n_jobs'],
             outputs="clean_model#hf",
             name='preprocess_models'
         ),
