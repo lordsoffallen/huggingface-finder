@@ -1,3 +1,5 @@
 preprocess:
   n_jobs: 10
 
+embeddings:
+  batch_size: 200

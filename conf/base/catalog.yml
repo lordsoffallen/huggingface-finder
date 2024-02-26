@@ -14,6 +14,12 @@ clean_dataset#hf:
   dataset_name: ftopal/huggingface-datasets
   credentials: *credentials
 
+dataset_embeddings#hf:
+  type: *HFDataset
+  filepath: data/05_model_input/datasets/
+  dataset_name: ftopal/huggingface-datasets-embeddings
+  credentials: *credentials
+
 model#api:
   type: hffinder.extras.api.HFModelScrapper
   cachepath: data/00_cache/models
@@ -28,4 +34,10 @@ clean_model#hf:
   type: *HFDataset
   filepath: data/04_feature/models/
   dataset_name: ftopal/huggingface-models
+  credentials: *credentials
+
+model_embeddings#hf:
+  type: *HFDataset
+  filepath: data/05_model_input/models/
+  dataset_name: ftopal/huggingface-models-embeddings
   credentials: *credentials
