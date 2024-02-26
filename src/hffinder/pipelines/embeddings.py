@@ -61,7 +61,7 @@ def compute_embeddings(
     ds = ds.map(
         lambda x: {
             "embeddings": get_embeddings(
-                model_and_tokenizer, x["text"], batch_size
+                model_and_tokenizer, x["processed_text"], batch_size
             ).detach().cpu().numpy()[0]
         }
     )
