@@ -1,0 +1,4 @@
+embeddings_model:
+  type: hffinder.extras.hf.HFTransformer
+  checkpoint: intfloat/multilingual-e5-base
+  move_to_device: True
