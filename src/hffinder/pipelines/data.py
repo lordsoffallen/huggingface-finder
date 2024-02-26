@@ -1,16 +1,17 @@
-from typing import Optional, Any
 from datasets import Dataset
-from hffinder.extras.iso_639 import LANGUAGES_ISO_639_1, LANGUAGES_ISO_639_3
 from bs4 import BeautifulSoup
 from unstructured.partition.html import partition_html
 from markdown_it import MarkdownIt
 from .regex import code_blocks, citation, placeholder, urls, emojis, \
     hidden_comment_blocks
+from iso639.language import Language, LanguageNotFoundError
 
+import logging
 import re
 import json
 
 
+logger = logging.getLogger(__file__)
 MD = MarkdownIt("commonmark").enable('table')
 
 
@@ -30,23 +31,11 @@ def convert_tags_to_str(tags: list) -> str:
 
             if kv_pair[0] == "language":
                 # Replace language iso code with language names
-                if len(kv_pair[1]) == 2:
-                    try:
-                        lang_name = LANGUAGES_ISO_639_1[kv_pair[1]]['name']
-                    except KeyError:
-                        lang_name = kv_pair[1]
-                elif len(kv_pair[1]) == 3:
-                    try:
-                        lang_name = LANGUAGES_ISO_639_3[kv_pair[1]]['name']
-                    except KeyError:
-                        lang_name = kv_pair[1]
-                elif kv_pair[1] in ['code', 'multilingual']:
+                try:
+                    lang_name = Language.match(kv_pair[1]).name
+                except LanguageNotFoundError:
                     lang_name = kv_pair[1]
-                else:
-                    raise ValueError(
-                        f"Unexpected language length={len(kv_pair[1])}, "
-                        f"lang={kv_pair[1]}"
-                    )
+
                 tag = f"{kv_pair[0]}:{lang_name}"
 
             tag_str += "#" + tag.replace(":", "-") + " "
@@ -58,20 +47,22 @@ def convert_tags_to_str(tags: list) -> str:
     return tag_str
 
 
-def extract_arxiv_number(tags: list) -> Optional[str]:
+def extract_arxiv_number(tags: list) -> list:
     if len(tags) == 0:
-        return None
+        return []
 
     if len(tags) == 1 and isinstance(tags[0], list):
         tags = tags[0]
+
+    links = []
 
     for tag in tags:
         if ":" in tag:
             kv_pair = tag.split(":")
             if kv_pair[0] == "arxiv":
-                return kv_pair[1]
+                links.append(kv_pair[1])
 
-    return None
+    return links
 
 
 def extract_languages(tags: list) -> list:
@@ -98,14 +89,34 @@ def extract_languages(tags: list) -> list:
     return langs
 
 
-def coalesce_null_langs(x):
+def coalesce_null_langs(x) -> list:
     """Sometimes metadata has lang information but tag not. """
 
-    if len(x['languages']) == 0:
+    langs = x['languages']
+
+    if len(langs) == 0:
         parsed = json.loads(x['metadata']).get('language')
+
         if parsed is not None:
-            return parsed if isinstance(parsed, list) else [parsed]
-    return x['languages']
+            if isinstance(parsed, list):
+                # YAML `no` issue gets converted to false and [{}] issue
+                for idx, lang in enumerate(parsed):
+                    if lang is False:
+                        parsed[idx] = "no"
+                    elif isinstance(lang, dict):
+                        parsed.pop(idx)     # remove dicts
+                    elif not isinstance(lang, str):
+                        logger.warning(f"List contains unusual data type={lang}")
+                return parsed
+            elif isinstance(parsed, str):
+                return [parsed]
+            elif isinstance(parsed, bool) and not parsed:
+                # YAML `no` issue gets converted to false
+                return ['no']
+            else:
+                logger.warning(f"Couldn't parse metadata language={parsed}")
+                return []
+    return langs
 
 
 def _preprocess_text(text: str) -> str:
@@ -164,14 +175,11 @@ def process_markdown(text: str):
     return text
 
 
-def preprocess_datasets(ds: Dataset, n_jobs: int = 10) -> Dataset:
+def preprocess(ds: Dataset, n_jobs: int = 10) -> Dataset:
     # Process Tags
     ds = ds.map(lambda x: {"arxiv": extract_arxiv_number(x)}, input_columns="tags")
     ds = ds.map(lambda x: {"languages": extract_languages(x)}, input_columns="tags")
-    ds = ds.map(
-        lambda x: {"languages": coalesce_null_langs(x)},
-        input_columns=["tags", "languages"]
-    )
+    ds = ds.map(lambda x: {"languages": coalesce_null_langs(x)})
     ds = ds.map(lambda x: {"tags_str": convert_tags_to_str(x)}, input_columns="tags")
 
     # Process Texts
@@ -183,9 +191,9 @@ def preprocess_datasets(ds: Dataset, n_jobs: int = 10) -> Dataset:
         input_columns="text_str",
         num_proc=n_jobs,
     )
+    ds = ds.map(
+        lambda txt, tag: {"processed_text": f"{txt}\n{tag}"},
+        input_columns=["text_str", "tags_str"]
+    )
 
     return ds
-
-
-def preprocess_models(ds: Dataset) -> Dataset:
-    pass

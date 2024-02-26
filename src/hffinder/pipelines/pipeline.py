@@ -1,5 +1,5 @@
 from kedro.pipeline import Pipeline, pipeline, node
-from .data import preprocess_models, preprocess_datasets
+from .data import preprocess
 
 
 def create_pipeline(**kwargs) -> Pipeline:
@@ -17,15 +17,15 @@ def create_pipeline(**kwargs) -> Pipeline:
             name='fetch_models'
         ),
         node(
-            preprocess_models,
-            inputs='model#hf',
-            outputs="clean_model#hf",
-            name='preprocess_models'
-        ),
-        node(
-            preprocess_datasets,
+            preprocess,
             inputs='dataset#hf',
             outputs="clean_dataset#hf",
             name='preprocess_datasets'
+        ),
+        node(
+            preprocess,
+            inputs='model#hf',
+            outputs="clean_model#hf",
+            name='preprocess_models'
         ),
     ])
