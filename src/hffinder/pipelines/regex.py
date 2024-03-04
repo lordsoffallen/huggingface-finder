@@ -36,9 +36,18 @@ citation = _citation.get_compiled_pattern()
 
 
 # URLs
-
 urls = HttpUrl().get_compiled_pattern()
 
+# Markdown Links [text](url)
+markdown_links = re.compile(r'\[([^]]+)]\(([^)]+)\)')
+
+markdown_headers = re.compile(r'(#{1,6} .*?)(?=\n#|$)', flags=re.DOTALL)
+
+html_table = re.compile(r'<table>(.+?)</table>', re.DOTALL)
+html_table_columns = re.compile(r'<th>(.+?)</th>')
+html_table_data = re.compile(
+    r'<tr>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*<td>(.*?)</td>\s*</tr>'
+)
 
 if sys.maxunicode < 0x10FFFF:
     emojis = re.compile(

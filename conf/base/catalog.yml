@@ -14,9 +14,15 @@ clean_dataset#hf:
   dataset_name: ftopal/huggingface-datasets
   credentials: *credentials
 
-dataset_embeddings#hf:
+processed_dataset#hf:
   type: *HFDataset
   filepath: data/05_model_input/datasets/
+  dataset_name: ftopal/huggingface-datasets-processed
+  credentials: *credentials
+
+dataset_embeddings#hf:
+  type: *HFDataset
+  filepath: data/07_model_output/datasets/
   dataset_name: ftopal/huggingface-datasets-embeddings
   credentials: *credentials
 
@@ -36,8 +42,14 @@ clean_model#hf:
   dataset_name: ftopal/huggingface-models
   credentials: *credentials
 
-model_embeddings#hf:
+processed_model#hf:
   type: *HFDataset
   filepath: data/05_model_input/models/
+  dataset_name: ftopal/huggingface-models-processed
+  credentials: *credentials
+
+model_embeddings#hf:
+  type: *HFDataset
+  filepath: data/07_model_output/models/
   dataset_name: ftopal/huggingface-models-embeddings
   credentials: *credentials

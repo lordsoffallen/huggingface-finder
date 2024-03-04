@@ -1,5 +1,5 @@
 from kedro.pipeline import Pipeline, pipeline, node
-from .data import preprocess
+from .data import preprocess, prepare_for_tokenizer
 from .embeddings import compute_embeddings
 
 
@@ -14,9 +14,25 @@ def create_datasets_pipeline() -> Pipeline:
         ),
         node(
             preprocess,
-            inputs=['dataset#hf', 'params:preprocess.n_jobs'],
+            inputs=[
+                'dataset#hf',
+                'params:preprocess.url_token',
+                'params:preprocess.n_jobs'
+            ],
             outputs="clean_dataset#hf",
             name='preprocess',
+            namespace='datasets',
+        ),
+        node(
+            prepare_for_tokenizer,
+            inputs=[
+                "sentence_transformer",
+                "clean_dataset#hf",
+                "params:prompt.context",
+                'params:preprocess.n_jobs'
+            ],
+            outputs="processed_dataset#hf",
+            name='prepare_for_tokenizer',
             namespace='datasets',
         ),
         node(
@@ -44,9 +60,25 @@ def create_models_pipeline() -> Pipeline:
         ),
         node(
             preprocess,
-            inputs=['model#hf', 'params:preprocess.n_jobs'],
+            inputs=[
+                'model#hf',
+                'params:preprocess.url_token',
+                'params:preprocess.n_jobs'
+            ],
             outputs="clean_model#hf",
-            name='preprocess_models',
+            name='preprocess',
+            namespace='models',
+        ),
+        node(
+            prepare_for_tokenizer,
+            inputs=[
+                "sentence_transformer",
+                "clean_model#hf",
+                "params:prompt.context",
+                'params:preprocess.n_jobs'
+            ],
+            outputs="processed_model#hf",
+            name='prepare_for_tokenizer',
             namespace='models',
         ),
         node(
