@@ -24,8 +24,8 @@ def get_embeddings(
 
     encoded_input = tokenizer(
         text_list,
-        padding=True,
-        max_length=tokenizer.model_max_length,
+        padding='max_length',
+        # max_length=tokenizer.model_max_length,
         truncation=False,
         return_tensors="pt",
     )

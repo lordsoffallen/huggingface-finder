@@ -12,6 +12,9 @@ def _single_batch_forward(
     if isinstance(input_filter_keys, str):
         input_filter_keys = [input_filter_keys]
 
+    if input_filter_keys is None:
+        input_filter_keys = []
+
     encoded_input = {
         k: v.to(device) for k, v in encoded_input.items() if k not in input_filter_keys
     }
