@@ -38,7 +38,7 @@ def create_datasets_pipeline() -> Pipeline:
         node(
             compute_embeddings,
             inputs=[
-                "clean_dataset#hf",
+                "processed_dataset#hf",
                 "sentence_transformer",
                 'params:embeddings.batch_size'
             ],
@@ -84,7 +84,7 @@ def create_models_pipeline() -> Pipeline:
         node(
             compute_embeddings,
             inputs=[
-                "clean_model#hf",
+                "processed_model#hf",
                 "sentence_transformer",
                 'params:embeddings.batch_size'
             ],

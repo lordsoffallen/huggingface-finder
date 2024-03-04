@@ -1,9 +1,8 @@
 from datasets import Dataset
 from .. import TransformerModel
-from typing import Any
 from .tools import forward
-from transformers import PreTrainedTokenizer
 
+import torch.nn.functional as f
 import torch
 
 
@@ -16,26 +15,25 @@ def mean_pooling(model_output: torch.Tensor, attention_mask: torch.Tensor):
 
 def get_embeddings(
     model_and_tokenizer: TransformerModel,
-    text_list: list[str] | str | Any,
+    text_list: list[str],
     batch_size: int = 400,
+    normalize: bool = True,
 ):
-    model: torch.nn.Module = model_and_tokenizer.model
-    tokenizer: PreTrainedTokenizer = model_and_tokenizer.tokenizer
+    model = model_and_tokenizer.model
+    tokenizer = model_and_tokenizer.tokenizer
 
     encoded_input = tokenizer(
         text_list,
         padding=True,
         max_length=tokenizer.model_max_length,
-        stride=int(tokenizer.model_max_length / 2),
-        truncation=True,
+        truncation=False,
         return_tensors="pt",
-        return_overflowing_tokens=True,
     )
 
     output = forward(
         model=model,
         encoded_input=encoded_input,
-        input_filter_keys='overflow_to_sample_mapping',
+        input_filter_keys=None,
         batch_size=batch_size,
     )
 
@@ -51,6 +49,9 @@ def get_embeddings(
         # Big chunk of text was processed in batches, so we average them again.
         pooled_embeddings = torch.mean(pooled_embeddings, dim=0, keepdim=True)
 
+    if normalize:
+        pooled_embeddings = f.normalize(pooled_embeddings, p=2, dim=1)
+
     return pooled_embeddings
 
 
@@ -61,7 +62,7 @@ def compute_embeddings(
     ds = ds.map(
         lambda x: {
             "embeddings": get_embeddings(
-                model_and_tokenizer, x["processed_text"], batch_size
+                model_and_tokenizer, x["processed_texts"], batch_size
             ).detach().cpu().numpy()[0]
         }
     )
