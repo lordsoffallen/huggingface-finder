@@ -228,7 +228,7 @@ def prepare_for_tokenizer(
             start_idx = 0
 
             for i, s in enumerate(token_lengths):
-                if size < max_length:
+                if (size < max_length) and ((size + s) < max_length):
                     size += s
                 else:
                     # get the current chunk
@@ -236,6 +236,7 @@ def prepare_for_tokenizer(
                         token_prefix + ''.join(texts[start_idx:i])
                     )
                     start_idx = i
+                    size = 0
 
             return batch_text
 
