@@ -25,10 +25,14 @@ def get_embeddings(
     encoded_input = tokenizer(
         text_list,
         padding='max_length',
-        # max_length=tokenizer.model_max_length,
+        max_length=tokenizer.model_max_length,
         truncation=False,
         return_tensors="pt",
     )
+
+    if len(encoded_input['input_ids']) > tokenizer.model_max_length:
+        raise ValueError(f"Tokens has a size of={len(encoded_input['input_ids'])}"
+                         f"which is greater than={tokenizer.model_max_length}")
 
     output = forward(
         model=model,
@@ -60,11 +64,13 @@ def compute_embeddings(
 ) -> Dataset:
 
     ds = ds.map(
-        lambda x: {
+        lambda texts: {
             "embeddings": get_embeddings(
-                model_and_tokenizer, x["processed_texts"], batch_size
+                model_and_tokenizer=model_and_tokenizer,
+                text_list=texts,
+                batch_size=batch_size
             ).detach().cpu().numpy()[0]
-        }
+        }, input_columns='input_texts'
     )
 
     return ds
