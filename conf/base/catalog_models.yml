@@ -1,6 +1,6 @@
 sentence_transformer:
   type: hffinder.extras.hf.HFTransformer
-  checkpoint: avsolatorio/GIST-all-MiniLM-L6-v2
+  checkpoint: intfloat/multilingual-e5-base
   move_to_device: True
   additional_special_tokens:
     - ${globals:url_token}

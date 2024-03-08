@@ -3,8 +3,8 @@ preprocess:
   url_token: ${globals:url_token}
 
 prompt:
-  query: "" # "query: "
-  context: "" # "passage: "
+  query: "query: "
+  context: "passage: "
 
 embeddings:
   batch_size: 200
