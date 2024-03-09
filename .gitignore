@@ -156,3 +156,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+
+# Exclude notebooks from github language
+notebooks/* linguist-vendored
