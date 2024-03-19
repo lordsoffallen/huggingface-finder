@@ -26,7 +26,7 @@ def get_embeddings(
         text_list,
         padding='max_length',
         max_length=tokenizer.model_max_length,
-        truncation=False,
+        truncation=True,
         return_tensors="pt",
     )
 
