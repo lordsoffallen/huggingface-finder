@@ -2,5 +2,3 @@ sentence_transformer:
   type: hffinder.extras.hf.HFTransformer
   checkpoint: intfloat/multilingual-e5-base
   move_to_device: True
-  additional_special_tokens:
-    - ${globals:url_token}

@@ -67,7 +67,6 @@ class HFTransformer(AbstractDataset):
         checkpoint: str,
         model_type: str = None,
         move_to_device: bool = True,
-        additional_special_tokens: list = None,
     ):
         self.checkpoint = checkpoint
 
@@ -83,13 +82,10 @@ class HFTransformer(AbstractDataset):
             self.model = AutoModel
 
         self.move_to_device = move_to_device
-        self.additional_special_tokens = additional_special_tokens
 
     def _load(self) -> TransformerModel:
         model = self.model.from_pretrained(self.checkpoint)
-        tokenizer = AutoTokenizer.from_pretrained(
-            self.checkpoint, additional_special_tokens=self.additional_special_tokens
-        )
+        tokenizer = AutoTokenizer.from_pretrained(self.checkpoint)
 
         if self.move_to_device:
             model.to(device)
