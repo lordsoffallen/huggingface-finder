@@ -5,6 +5,7 @@ from .regex import code_blocks, citation, placeholder, urls, emojis, \
     html_table_data, markdown_headers
 from iso639.language import Language, LanguageNotFoundError
 from markdownify import markdownify
+from langdetect import detect
 from . import BLACK_LIST
 from .. import TransformerModel
 
@@ -15,6 +16,19 @@ import json
 
 logger = logging.getLogger(__file__)
 MD = MarkdownIt("commonmark").enable('table')
+
+
+def is_english(text: str) -> bool:
+    lang = detect(text)
+    return lang == 'en'
+
+
+def english_text_percentage(text: str) -> float:
+    md = text.split('\n')
+    total_length = sum(len(line) for line in md)
+    english_length = sum(len(line) for line in md if is_english(line))
+    english_percentage = (english_length / total_length) * 100
+    return english_percentage
 
 
 def convert_tags_to_str(tags: list) -> str:
@@ -171,9 +185,14 @@ def process_markdown(text: str) -> list[str]:
     return [group.strip() for group in headers_and_contents]
 
 
-def preprocess(ds: Dataset, url_token: str, n_jobs: int | str = 10) -> Dataset:
+def preprocess(ds: Dataset, url_token: str = "URL", n_jobs: int | str = 10) -> Dataset:
     # filter bad dataset/model ids
     ds = ds.filter(lambda x: True if x not in BLACK_LIST else False, input_columns='id')
+    # Remove non-english data sources
+    ds = ds.filter(
+        lambda x: True if english_text_percentage(x) > 50 else False,
+        input_columns='text'
+    )
 
     # Process Tags
     ds = ds.map(lambda x: {"arxiv": extract_arxiv_number(x)}, input_columns="tags")
