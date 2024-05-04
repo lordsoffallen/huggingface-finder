@@ -16,6 +16,7 @@ def create_datasets_pipeline() -> Pipeline:
             preprocess,
             inputs=[
                 'dataset#hf',
+                "sentence_transformer",
                 'params:preprocess.url_token',
                 'params:preprocess.n_jobs'
             ],
@@ -62,6 +63,7 @@ def create_models_pipeline() -> Pipeline:
             preprocess,
             inputs=[
                 'model#hf',
+                "sentence_transformer",
                 'params:preprocess.url_token',
                 'params:preprocess.n_jobs'
             ],
