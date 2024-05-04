@@ -5,7 +5,6 @@ from .regex import code_blocks, citation, placeholder, urls, emojis, \
     html_table_data, markdown_headers
 from iso639.language import Language, LanguageNotFoundError
 from markdownify import markdownify
-from langdetect import detect
 from . import BLACK_LIST
 from .. import TransformerModel
 
@@ -18,17 +17,15 @@ logger = logging.getLogger(__file__)
 MD = MarkdownIt("commonmark").enable('table')
 
 
-def is_english(text: str) -> bool:
-    lang = detect(text)
-    return lang == 'en'
-
-
-def english_text_percentage(text: str) -> float:
-    md = text.split('\n')
-    total_length = sum(len(line) for line in md)
-    english_length = sum(len(line) for line in md if is_english(line))
-    english_percentage = (english_length / total_length) * 100
-    return english_percentage
+def is_mostly_english(text, tokenizer) -> float:
+    tokens = tokenizer.tokenize(text)
+    unknown_token_count = tokens.count(tokenizer.unk_token)
+    # Calculate the ratio of unknown tokens to total tokens
+    try:
+        ratio = unknown_token_count / len(tokens)
+        return ratio < 0.5
+    except ZeroDivisionError:
+        return False
 
 
 def convert_tags_to_str(tags: list) -> str:
@@ -185,14 +182,14 @@ def process_markdown(text: str) -> list[str]:
     return [group.strip() for group in headers_and_contents]
 
 
-def preprocess(ds: Dataset, url_token: str = "URL", n_jobs: int | str = 10) -> Dataset:
+def preprocess(
+    ds: Dataset,
+    model_and_tokenizer: TransformerModel,
+    url_token: str = "URL",
+    n_jobs: int | str = 10
+) -> Dataset:
     # filter bad dataset/model ids
     ds = ds.filter(lambda x: True if x not in BLACK_LIST else False, input_columns='id')
-    # Remove non-english data sources
-    ds = ds.filter(
-        lambda x: True if english_text_percentage(x) > 50 else False,
-        input_columns='text'
-    )
 
     # Process Tags
     ds = ds.map(lambda x: {"arxiv": extract_arxiv_number(x)}, input_columns="tags")
@@ -208,6 +205,15 @@ def preprocess(ds: Dataset, url_token: str = "URL", n_jobs: int | str = 10) -> D
     )
     # Filter empty markdown files
     ds = ds.filter(lambda x: True if len(x) > 0 else False, input_columns="text_str")
+    # Remove non-english data sources
+    # If the ratio of unknown tokens is less than 0.5, consider it mostly English
+    tokenizer = model_and_tokenizer.tokenizer
+    ds = ds.filter(
+        lambda x: True if is_mostly_english(x, tokenizer) else False,
+        input_columns='text_str',
+        num_proc=n_jobs if isinstance(n_jobs, int) else int(n_jobs),
+    )
+
     # Parse Markdown tables if they exist
     ds = ds.map(
         lambda x: {"text_str": _parse_tables(x)},
