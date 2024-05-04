@@ -15,10 +15,19 @@ def mean_pooling(model_output: torch.Tensor, attention_mask: torch.Tensor):
     return sum_embeddings / sum_mask
 
 
+def cls_pooling(model_output: torch.Tensor) -> torch.Tensor:
+    return model_output[:, 0]
+
+
+def normalize_embeddings(embeddings: torch.Tensor) -> torch.Tensor:
+    return torch.nn.functional.normalize(embeddings, p=2, dim=1)
+
+
 def get_embeddings(
     model_and_tokenizer: TransformerModel,
     text_list: list[str],
     batch_size: int = 400,
+    normalize: bool = False,
 ):
     model = model_and_tokenizer.model
     tokenizer = model_and_tokenizer.tokenizer
@@ -48,11 +57,15 @@ def get_embeddings(
     else:
         output = output.last_hidden_state
 
-    pooled_embeddings = mean_pooling(output, encoded_input['attention_mask'])
+    pooled_embeddings = cls_pooling(output)
+    # pooled_embeddings = mean_pooling(output, encoded_input['attention_mask'])
 
     if pooled_embeddings.dim() == 2 and pooled_embeddings.shape[0] > 1:
         # Big chunk of text was processed in batches, so we average them again.
         pooled_embeddings = torch.mean(pooled_embeddings, dim=0, keepdim=True)
+
+    if normalize:
+        pooled_embeddings = normalize_embeddings(pooled_embeddings)
 
     return pooled_embeddings
 
