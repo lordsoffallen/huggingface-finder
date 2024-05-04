@@ -84,8 +84,10 @@ class HFTransformer(AbstractDataset):
         self.move_to_device = move_to_device
 
     def _load(self) -> TransformerModel:
-        model = self.model.from_pretrained(self.checkpoint)
-        tokenizer = AutoTokenizer.from_pretrained(self.checkpoint)
+        model = self.model.from_pretrained(self.checkpoint, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(
+            self.checkpoint, trust_remote_code=True
+        )
 
         if self.move_to_device:
             model.to(device)
