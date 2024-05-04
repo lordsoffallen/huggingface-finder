@@ -7,5 +7,4 @@ pip install -q \
     kedro_datasets \
     pregex \
     python-iso639 \
-    markdownify \
-    langdetect
+    markdownify
