@@ -4,6 +4,7 @@ from .tools import forward
 
 import logging
 import torch
+import itertools
 
 
 logger = logging.getLogger(__file__)
@@ -27,15 +28,23 @@ def normalize_embeddings(embeddings: torch.Tensor) -> torch.Tensor:
     return torch.nn.functional.normalize(embeddings, p=2, dim=1)
 
 
+def flatten_list(text_list: list):
+    return list(itertools.chain.from_iterable(text_list))
+
+
 def get_embeddings(
     model_and_tokenizer: TransformerModel,
-    text_list: list[str],
+    text_list: list[str] | list,
     batch_size: int = 400,
     normalize: bool = False,
     reduce: bool = False,
 ) -> torch.Tensor:
     model = model_and_tokenizer.model
     tokenizer = model_and_tokenizer.tokenizer
+
+    if isinstance(text_list, list):
+        if isinstance(text_list[0], list):
+            text_list = flatten_list(text_list)
 
     encoded_input = tokenizer(
         text_list,
@@ -92,7 +101,7 @@ def compute_embeddings(
     )
 
     if len(batched_ds) > 0:
-        logger.info("Running batched input data")
+        logger.info(f"Running batched input data with len={len(batched_ds)}")
         batched_ds = batched_ds.map(
             lambda texts: {
                 "embeddings": get_embeddings(

@@ -3,8 +3,8 @@ preprocess:
   url_token: URL
 
 prompt:
-  query: "query: "
-  context: "passage: "
+  query: ""   # "query: "
+  context: "" # "passage: "
 
 embeddings:
   batch_size: 200
