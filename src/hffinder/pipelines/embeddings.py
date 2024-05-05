@@ -84,22 +84,27 @@ def compute_embeddings(
     ds: Dataset, model_and_tokenizer: TransformerModel, batch_size: int = 400
 ) -> Dataset:
 
-    batched_ds = ds.filter(lambda x: True if len(x) > 1 else False)
-    single_ds = ds.filter(lambda x: True if len(x) == 1 else False)
-
-    logger.info("Running batched input data")
-    batched_ds = batched_ds.map(
-        lambda texts: {
-            "embeddings": get_embeddings(
-                model_and_tokenizer=model_and_tokenizer,
-                text_list=texts,
-                batch_size=batch_size,
-                reduce=True,
-            ).detach().cpu().numpy()[0]
-        },
-        input_columns='input_texts',
-        batched=False,
+    batched_ds = ds.filter(
+        lambda x: True if len(x) > 1 else False, input_columns='input_texts'
     )
+    single_ds = ds.filter(
+        lambda x: True if len(x) == 1 else False, input_columns='input_texts'
+    )
+
+    if batched_ds.num_rows > 0:
+        logger.info("Running batched input data")
+        batched_ds = batched_ds.map(
+            lambda texts: {
+                "embeddings": get_embeddings(
+                    model_and_tokenizer=model_and_tokenizer,
+                    text_list=texts,
+                    batch_size=batch_size,
+                    reduce=True,
+                ).detach().cpu().numpy()[0]
+            },
+            input_columns='input_texts',
+            batched=False,
+        )
 
     logger.info("Running single input data with batches")
     single_ds = single_ds.map(
