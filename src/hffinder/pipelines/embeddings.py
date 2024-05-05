@@ -91,7 +91,7 @@ def compute_embeddings(
         lambda x: True if len(x) == 1 else False, input_columns='input_texts'
     )
 
-    if batched_ds.num_rows > 0:
+    if len(batched_ds) > 0:
         logger.info("Running batched input data")
         batched_ds = batched_ds.map(
             lambda texts: {
