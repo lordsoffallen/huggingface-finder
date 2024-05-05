@@ -1,0 +1,26 @@
+name: huggingface-finder-gpu
+channels:
+  - conda-forge
+  - defaults
+  - pytorch
+  - xformers
+  - nvidia
+dependencies:
+  - python=3.10
+  - ipython
+  - jupyter
+  - kedro
+  - notebook
+  - pytest
+  - huggingface_hub
+  - markdown-it-py
+  - datasets
+  - pytorch-cuda=12.1
+  - pytorch
+  - transformers
+  - pregex
+  - markdownify
+  - xformers
+  - pip:
+      - python-iso639
+prefix: /home/ftopal/miniconda3/envs/huggingface-finder-gpu
