@@ -109,7 +109,7 @@ def compute_embeddings(
                     text_list=texts,
                     batch_size=batch_size,
                     reduce=True,
-                ).detach().cpu().numpy()[0]
+                ).detach().cpu().numpy()
             },
             input_columns='input_texts',
             batched=False,
@@ -123,7 +123,7 @@ def compute_embeddings(
                 text_list=texts,
                 batch_size=batch_size,
                 reduce=False,
-            ).detach().cpu().numpy()[0]
+            ).detach().cpu().numpy()
         },
         input_columns='input_texts',
         batched=True,
