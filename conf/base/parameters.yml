@@ -1,6 +1,6 @@
 preprocess:
   n_jobs: 10
-  url_token: ${globals:url_token}
+  url_token: URL
 
 prompt:
   query: "query: "
