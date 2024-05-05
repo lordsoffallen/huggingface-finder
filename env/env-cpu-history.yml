@@ -1,0 +1,26 @@
+name: huggingface-finder
+channels:
+  - conda-forge
+  - defaults
+  - pytorch
+  - xformers
+dependencies:
+  - python=3.10
+  - ipython
+  - jupyter
+  - kedro
+  - notebook
+  - pytest
+  - huggingface_hub
+  - markdown-it-py
+  - datasets
+  - cpuonly
+  - pytorch
+  - transformers
+  - pregex
+  - markdownify
+  - faiss-cpu==1.7.2
+  - xformers
+  - pip:
+      - python-iso639
+prefix: /home/ftopal/miniconda3/envs/huggingface-finder

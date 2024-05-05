@@ -1,26 +1,50 @@
-from datasets import Dataset
+from datasets import Dataset, concatenate_datasets
 from .. import TransformerModel
 from .tools import forward
 
-import torch.nn.functional as f
+import logging
 import torch
+import itertools
+
+
+logger = logging.getLogger(__file__)
 
 
 def mean_pooling(model_output: torch.Tensor, attention_mask: torch.Tensor):
     """ Mean Pooling - Take attention mask into account for correct averaging """
     token_embeddings, attention_mask = model_output.to('cpu'), attention_mask.to('cpu')
-    last_hidden = token_embeddings.masked_fill(~attention_mask[..., None].bool(), 0.0)
-    return last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
+    input_mask_expanded = attention_mask.unsqueeze(-1).expand(
+        token_embeddings.size()).float()
+    sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
+    sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+    return sum_embeddings / sum_mask
+
+
+def cls_pooling(model_output: torch.Tensor) -> torch.Tensor:
+    return model_output[:, 0]
+
+
+def normalize_embeddings(embeddings: torch.Tensor) -> torch.Tensor:
+    return torch.nn.functional.normalize(embeddings, p=2, dim=1)
+
+
+def flatten_list(text_list: list):
+    return list(itertools.chain.from_iterable(text_list))
 
 
 def get_embeddings(
     model_and_tokenizer: TransformerModel,
-    text_list: list[str],
+    text_list: list[str] | list,
     batch_size: int = 400,
-    normalize: bool = True,
-):
+    normalize: bool = False,
+    reduce: bool = False,
+) -> torch.Tensor:
     model = model_and_tokenizer.model
     tokenizer = model_and_tokenizer.tokenizer
+
+    if isinstance(text_list, list):
+        if isinstance(text_list[0], list):
+            text_list = flatten_list(text_list)
 
     encoded_input = tokenizer(
         text_list,
@@ -47,30 +71,65 @@ def get_embeddings(
     else:
         output = output.last_hidden_state
 
-    pooled_embeddings = mean_pooling(output, encoded_input['attention_mask'])
+    pooled_embeddings = cls_pooling(output)
+    # pooled_embeddings = mean_pooling(output, encoded_input['attention_mask'])
 
-    if pooled_embeddings.dim() == 2 and pooled_embeddings.shape[0] > 1:
-        # Big chunk of text was processed in batches, so we average them again.
-        pooled_embeddings = torch.mean(pooled_embeddings, dim=0, keepdim=True)
+    if reduce:
+        pooled_embeddings = _batch_reduce(pooled_embeddings)
 
     if normalize:
-        pooled_embeddings = f.normalize(pooled_embeddings, p=2, dim=1)
+        pooled_embeddings = normalize_embeddings(pooled_embeddings)
 
     return pooled_embeddings
+
+
+def _batch_reduce(embeddings: torch.Tensor) -> torch.Tensor:
+    if embeddings.dim() == 2 and embeddings.shape[0] > 1:
+        # Big chunk of text was processed in batches, so we average them again.
+        return torch.mean(embeddings, dim=0, keepdim=True)
 
 
 def compute_embeddings(
     ds: Dataset, model_and_tokenizer: TransformerModel, batch_size: int = 400
 ) -> Dataset:
 
-    ds = ds.map(
+    batched_ds = ds.filter(
+        lambda x: True if len(x) > 1 else False, input_columns='input_texts'
+    )
+    single_ds = ds.filter(
+        lambda x: True if len(x) == 1 else False, input_columns='input_texts'
+    )
+
+    if len(batched_ds) > 0:
+        logger.info(f"Running batched input data with len={len(batched_ds)}")
+        batched_ds = batched_ds.map(
+            lambda texts: {
+                "embeddings": get_embeddings(
+                    model_and_tokenizer=model_and_tokenizer,
+                    text_list=texts,
+                    batch_size=batch_size,
+                    reduce=True,
+                ).detach().cpu().numpy()
+            },
+            input_columns='input_texts',
+            batched=False,
+        )
+
+    logger.info("Running single input data with batches")
+    single_ds = single_ds.map(
         lambda texts: {
             "embeddings": get_embeddings(
                 model_and_tokenizer=model_and_tokenizer,
                 text_list=texts,
-                batch_size=batch_size
-            ).detach().cpu().numpy()[0]
-        }, input_columns='input_texts'
+                batch_size=batch_size,
+                reduce=False,
+            ).detach().cpu().numpy()
+        },
+        input_columns='input_texts',
+        batched=True,
+        batch_size=batch_size,
     )
+
+    ds = concatenate_datasets([batched_ds, single_ds])
 
     return ds

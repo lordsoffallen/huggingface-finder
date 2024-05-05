@@ -1,10 +1,18 @@
 preprocess:
   n_jobs: 10
-  url_token: ${globals:url_token}
+  url_token: URL
 
 prompt:
-  query: "query: "
-  context: "passage: "
+  query: ""   # "query: "
+  context: "" # "passage: "
 
 embeddings:
   batch_size: 200
+  top_k: 5
+
+question:
+  data: ""
+  model: >
+    I need the best model that can be used for text or sentence embeddings. 
+    The model should not be bigger than 1B parameter. It should be a multilingual model
+    that supports English, German, Chinese, Russian at least.
